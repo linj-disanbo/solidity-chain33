@@ -1,0 +1,24 @@
+FROM golang:1.17 as build
+ENV GO111MODULE=on \
+  CGO_ENABLED=0 \
+  GOOS=linux \
+  GOARCH=amd64 \
+  GOPROXY="https://goproxy.cn"
+WORKDIR /source
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . . 
+RUN make build
+
+
+FROM ubuntu:18.04 
+WORKDIR /app
+COPY --from=build /source/build/chain33 /source/build/chain33-cli ./
+COPY chain33-solo-evm.toml  ./chain33.toml
+EXPOSE 8545
+EXPOSE 8546
+EXPOSE 8801
+EXPOSE 8802
+ENTRYPOINT  ["./chain33", "-f", "./chain33.toml"]
+# docker build -t chain33-evm:lastest .
+
